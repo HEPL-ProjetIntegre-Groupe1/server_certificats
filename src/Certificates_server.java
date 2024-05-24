@@ -7,25 +7,18 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Date;
-
-import sun.security.x509.*;
 
 public class Certificates_server implements ProtocoleReseauSSL{
     private final LoggerDS logger;
-    private static final long validity = 365L * 24 * 60 * 60 * 1000; // 1 an
-    private final String keystorePath;
-    private final String keystorePassword;
-    private final String keyPassword;
+    private final CertificateHandler certificateHandler;
 
 
 
     public Certificates_server(LoggerDS logger, String keystorePath, String keystorePassword, String keyPassword) {
         this.logger = logger;
-        this.keystorePath = keystorePath;
-        this.keystorePassword = keystorePassword;
-        this.keyPassword = keyPassword;
+        this.certificateHandler = new CertificateHandler(keystorePath, keystorePassword, keyPassword);
     }
 
     public void communique (SSLSocket sslSocket, int numLog) {
@@ -59,13 +52,24 @@ public class Certificates_server implements ProtocoleReseauSSL{
         String country = (String) requete.getFromMessageList(5);
 
         // Génération d'une paire de clés RSA 2048
-        KeyPair keyPair = generateKeyPair(numLog);
+        KeyPair keyPair = null;
+        try {
+            keyPair = certificateHandler.generateKeyPair();
+        } catch (NoSuchAlgorithmException e) {
+            logger.log("Thread Com "+ numLog,e.getMessage());
+        }
         if (keyPair == null) {
             return;
         }
         logger.log("Thread Com "+ numLog,"Paire de clés générée");
         // Génération et signature du certificat
-        X509Certificate cert = generateAndSignCertificate(numLog, keyPair, commonName, organisationUnit, organisation, locality, state, country);
+        X509Certificate cert = null;
+        try {
+            cert = certificateHandler.generateAndSignCertificate(keyPair, commonName, organisationUnit, organisation, locality, state, country);
+        } catch (IOException | KeyStoreException | CertificateException | NoSuchAlgorithmException |
+                 SignatureException | InvalidKeyException | NoSuchProviderException | UnrecoverableKeyException e) {
+            logger.log("Thread Com "+ numLog,e.getMessage());
+        }
         if (cert == null) {
             return;
         }
@@ -80,54 +84,6 @@ public class Certificates_server implements ProtocoleReseauSSL{
         reponse.toStream(ooStream);
         logger.log("Thread Com "+ numLog,"Certificat envoyé");
 
-    }
-
-    private KeyPair generateKeyPair(int numLog) {
-        try {
-            KeyPairGenerator pairGen  = KeyPairGenerator.getInstance("RSA");
-            pairGen.initialize(2048);
-            return pairGen.generateKeyPair();
-        } catch (Exception e) {
-            logger.log("Thread Com " + numLog, e.getMessage());
-            return null;
-        }
-    }
-
-    private X509Certificate generateAndSignCertificate(int numLog, KeyPair keyPair, String commonName, String organisationUnit, String organisation, String locality, String state, String country) {
-        try {
-            X500Name x500Name = new X500Name(commonName, organisationUnit, organisation, locality, state, country);
-            X500Name issuer = new X500Name("CA", "Neverland Federal", "Neverland Federal", "Neverland", "Neverland", "NV");
-            // get the ca issuer info
-            X509CertInfo info = new X509CertInfo();
-            info.set(X509CertInfo.SUBJECT, x500Name);
-            info.set(X509CertInfo.VALIDITY, new CertificateValidity(new Date(), new Date(System.currentTimeMillis() + validity)));
-            info.set(X509CertInfo.SERIAL_NUMBER, new sun.security.x509.SerialNumber(new java.util.Random().nextInt() & 0x7fffffff));
-            info.set(X509CertInfo.KEY, keyPair.getPublic());
-            info.set(X509CertInfo.VERSION, new sun.security.x509.CertificateVersion(sun.security.x509.CertificateVersion.V3));
-            // algo de signature par defaut -> sera mis à jour
-            AlgorithmId algo = new AlgorithmId(AlgorithmId.SHA256withECDSA_oid);
-            info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
-            info.set(X509CertInfo.ISSUER, issuer);
-            X509CertImpl cert = new X509CertImpl(info);
-
-            // Signature du certificat avec la clé privée du CA
-            // Recup de la clé privée du CA
-            KeyStore keystoreCA = KeyStore.getInstance("JKS");
-            keystoreCA.load(new java.io.FileInputStream(keystorePath), keystorePassword.toCharArray());
-            PrivateKey caPrivateKey = (PrivateKey) keystoreCA.getKey("ca", keyPassword.toCharArray());
-            // Signature du certificat
-            cert.sign(caPrivateKey, "SHA256withRSA");
-            // màj algorithm pour le certificat
-            algo = (AlgorithmId) cert.get(X509CertImpl.SIG_ALG);
-            info.set(CertificateAlgorithmId.NAME + "." + CertificateAlgorithmId.ALGORITHM, algo);
-            cert = new X509CertImpl(info);
-            // re-signature du certificat
-            cert.sign(caPrivateKey, "SHA256withRSA");
-            return cert;
-        } catch (Exception e) {
-            logger.log("Thread Com " + numLog, e.getMessage());
-            return null;
-        }
     }
 
     @Override
