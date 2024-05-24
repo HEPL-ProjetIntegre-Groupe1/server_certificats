@@ -55,7 +55,7 @@ public class Certificates_server implements ProtocoleReseauSSL{
         KeyPair keyPair = null;
         try {
             keyPair = certificateHandler.generateKeyPair();
-        } catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
             logger.log("Thread Com "+ numLog,e.getMessage());
         }
         if (keyPair == null) {
