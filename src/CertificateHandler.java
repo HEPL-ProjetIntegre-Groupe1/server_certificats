@@ -88,6 +88,7 @@ public class CertificateHandler {
             KeyStore issuedKeyStore = KeyStore.getInstance("JKS");
             issuedKeyStore.load(new FileInputStream(issuedKeyStorePath), issuedKeystorePassword.toCharArray());
             issuedKeyStore.setCertificateEntry(commonName, cert);
+            issuedKeyStore.store(new java.io.FileOutputStream(issuedKeyStorePath), issuedKeystorePassword.toCharArray());
 
             return cert;
         } catch (OperatorCreationException e) {
