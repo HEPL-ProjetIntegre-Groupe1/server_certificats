@@ -25,21 +25,27 @@ import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 
 public class CertificateHandler {
 
-    private final String caKeystorePath;
-    private final String caKeystorePassword;
-    private final String caKeyPassword;
+    private String caKeystorePath;
+    private String caKeystorePassword;
+    private String caKeyPassword;
+    private String issuedKeystorePath;
+    private String issuedKeystorePassword;
 
     private final X500Name issuer = new X500Name("CN=Neverland Federal, OU=Neverland Federal, O=Neverland Federal, L=Neverland, ST=Neverland, C=NV");
 
-    private final String issuedKeyStorePath = "../Keystore/issued.jks";
-    private final String issuedKeystorePassword = "issued";
-
-    public CertificateHandler(String caKeystorePath, String caKeystorePassword, String caKeyPassword) {
+    public CertificateHandler() {
         // init bouncy castle
         Security.addProvider(new BouncyCastleProvider());
+    }
+
+    public void setCaKeystore(String caKeystorePath, String caKeystorePassword, String caKeyPassword) {
         this.caKeystorePath = caKeystorePath;
         this.caKeystorePassword = caKeystorePassword;
         this.caKeyPassword = caKeyPassword;
+    }
+    public void setIssuedKeystore(String issuedKeystorePath, String issuedKeystorePassword) {
+        this.issuedKeystorePath = issuedKeystorePath;
+        this.issuedKeystorePassword = issuedKeystorePassword;
     }
 
     public KeyPair generateKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -88,9 +94,9 @@ public class CertificateHandler {
 
             // export to issued keystore
             KeyStore issuedKeyStore = KeyStore.getInstance("JKS");
-            issuedKeyStore.load(new FileInputStream(issuedKeyStorePath), issuedKeystorePassword.toCharArray());
+            issuedKeyStore.load(new FileInputStream(issuedKeystorePath), issuedKeystorePassword.toCharArray());
             issuedKeyStore.setCertificateEntry(commonName, cert);
-            issuedKeyStore.store(new java.io.FileOutputStream(issuedKeyStorePath), issuedKeystorePassword.toCharArray());
+            issuedKeyStore.store(new java.io.FileOutputStream(issuedKeystorePath), issuedKeystorePassword.toCharArray());
 
             return cert;
         } catch (OperatorCreationException e) {

@@ -4,12 +4,17 @@ import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 
 public class CertificateSigningTester {
-    private static final String keystorePath = "../Keystore/neverlandrootca.jks";
-    private static final String keystorePassword = "neverlandrootca";
-    private static final String keyPassword = "ca";
+    private static final String caKeystorePath = "../Keystore/neverlandrootca.jks";
+    private static final String caKeystorePassword = "neverlandrootca";
+    private static final String caKeyPassword = "ca";
+    private static final String issuedKeystorePath = "../Keystore/issued.jks";
+    private static final String issuedKeystorePassword = "issued";
+    
     public static void main(String[] args) {
         System.out.println("Hello, Programmers!");
-        CertificateHandler certificateHandler = new CertificateHandler(keystorePath, keystorePassword, keyPassword);
+        CertificateHandler certificateHandler = new CertificateHandler();
+        certificateHandler.setCaKeystore(caKeystorePath, caKeystorePassword, caKeyPassword);
+        certificateHandler.setIssuedKeystore(issuedKeystorePath, issuedKeystorePassword);
         try {
             KeyPair keyPair = certificateHandler.generateKeyPair();
             X509Certificate certificate = certificateHandler.generateAndSignCertificate(keyPair, "CN", "OU", "O", "L", "S", "C");
