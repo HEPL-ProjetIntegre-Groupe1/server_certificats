@@ -8,6 +8,8 @@ import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.SocketException;
+import java.nio.channels.ClosedByInterruptException;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -90,6 +92,11 @@ public class CertificatesProtocol implements ProtocoleReseauSSL{
         reponse.toStream(ooStream);
         logger.log("Thread Com "+ numLog,"Certificat envoyé");
 
+        // attendre que le client a bien reçu le certificat
+        try {
+            requete = Message.fromStream(oiStream);
+        } catch (ClosedByInterruptException | SocketException ignored) {
+        }
     }
 
     @Override
