@@ -1,3 +1,5 @@
+package com.neverland.certificates;
+
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 

@@ -1,3 +1,5 @@
+package com.neverland.certificates;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;

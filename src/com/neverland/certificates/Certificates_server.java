@@ -1,3 +1,5 @@
+package com.neverland.certificates;
+
 import SecuMessageDS.Message;
 import serveurgenssl.LoggerDS;
 import serveurgenssl.ProtocoleReseauSSL;
