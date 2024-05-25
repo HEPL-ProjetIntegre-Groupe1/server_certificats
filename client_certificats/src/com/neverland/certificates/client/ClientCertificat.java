@@ -23,16 +23,19 @@ public class ClientCertificat {
     private SSLSocketFactory sslSocketFactory;
     private SSLSocket socketClient;
 
+    private X509Certificate certificate;
+    private PrivateKey privateKey;
+
     public static void main(String[] args) {
         System.out.println("Hello world!");
         ClientCertificat client = new ClientCertificat();
-        client.getCertifiedKeyPair();
+        client.getCertifiedKeyPair("jean dupont", "neverland inc.", "service technique", "neverland city", "neverland state", "NV");
     }
 
     public ClientCertificat(){
 
     }
-    public void getCertifiedKeyPair(){
+    public void getCertifiedKeyPair(String commonName, String organisationUnit, String organisation, String locality, String state, String country){
         KeyStore keystore = null;
         try {
             keystore = KeyStore.getInstance("JKS");
@@ -51,12 +54,12 @@ public class ClientCertificat {
             ObjectOutputStream ooStream = new ObjectOutputStream(socketClient.getOutputStream());
             ObjectInputStream oiStream = new ObjectInputStream(socketClient.getInputStream());
             Message requete = new Message(2);
-            requete.addToMessageList("jean dupont");
-            requete.addToMessageList("neverland inc.");
-            requete.addToMessageList("service technique");
-            requete.addToMessageList("neverland city");
-            requete.addToMessageList("neverland state");
-            requete.addToMessageList("neverland");
+            requete.addToMessageList(commonName);
+            requete.addToMessageList(organisationUnit);
+            requete.addToMessageList(organisation);
+            requete.addToMessageList(locality);
+            requete.addToMessageList(state);
+            requete.addToMessageList(country);
             requete.toStream(ooStream);
             System.out.println("Message sent");
 
