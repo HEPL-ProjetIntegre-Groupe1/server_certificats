@@ -16,7 +16,7 @@ public class ClientCertificat {
     private final int serverPort = 8044;
 
 
-    private final String keystorePath = "../keystores/client_certificates.jks";
+    private final String keystorePath = "./keystores/client_certificates.jks";
     private final String keystorePassword = "client_certificates";
     private final String keyPassword = "client_certificates";
 
@@ -30,6 +30,16 @@ public class ClientCertificat {
         System.out.println("Hello world!");
         ClientCertificat client = new ClientCertificat();
         client.getCertifiedKeyPair("jean dupont", "neverland inc.", "service technique", "neverland city", "neverland state", "NV");
+        System.out.println(client.getCertificate());
+        System.out.println(client.getPrivateKey());
+    }
+
+    public X509Certificate getCertificate() {
+        return certificate;
+    }
+
+    public PrivateKey getPrivateKey() {
+        return privateKey;
     }
 
     public ClientCertificat(){
@@ -65,15 +75,24 @@ public class ClientCertificat {
 
             Message response = Message.fromStream(oiStream);
             System.out.println("Response received");
-            X509Certificate certificate = (X509Certificate) response.getFromMessageList(0);
-            PrivateKey privateKey = (PrivateKey) response.getFromMessageList(1);
-            System.out.println(certificate);
-            System.out.println(privateKey);
-
+            this.certificate = (X509Certificate) response.getFromMessageList(0);
+            this.privateKey = (PrivateKey) response.getFromMessageList(1);
             requete = new Message(2,true);
             requete.toStream(ooStream);
         } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | IOException |
                  NoSuchAlgorithmException | KeyManagementException e) {
+            System.out.println("An error occurred: " + e.getMessage());
+        }
+    }
+
+    public void saveCertificateAndPrivateKey(String alias, X509Certificate certificate, PrivateKey privateKey) {
+        KeyStore keystore = null;
+        try {
+            keystore = KeyStore.getInstance("JKS");
+            keystore.load(new FileInputStream(keystorePath), keystorePassword.toCharArray());
+            keystore.setKeyEntry(alias, privateKey, keyPassword.toCharArray(), new X509Certificate[]{certificate});
+            keystore.store(new java.io.FileOutputStream(keystorePath), keystorePassword.toCharArray());
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
             System.out.println("An error occurred: " + e.getMessage());
         }
     }
